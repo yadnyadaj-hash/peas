@@ -8,6 +8,12 @@ export function calculateOverallPerformance(employee) {
   return Math.round((sum / 5) * 10) / 10; // 1 decimal place
 }
 
+export function calculateKpiFromRatings(ratings) {
+  if (!ratings?.length) return 0;
+  const sum = ratings.reduce((total, rating) => total + Number(rating || 0), 0);
+  return Math.round((sum / (ratings.length * 5)) * 100);
+}
+
 // Get rating label based on score
 export function getPerformanceRating(score) {
   if (score >= 90) return "Excellent";

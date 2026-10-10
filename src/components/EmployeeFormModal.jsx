@@ -6,10 +6,7 @@ import { calculateOverallPerformance } from '../utils/performanceUtils.js'
 
 const emptyForm = {
   name: '', email: '', phone: '', department: '', designation: '', manager: '', joiningDate: '', status: 'Active',
-  productivity: '', quality: '', teamwork: '', communication: '', attendance: '',
 }
-
-const kpis = ['productivity', 'quality', 'teamwork', 'communication', 'attendance']
 
 function getInitialValues(employee) {
   if (!employee) return emptyForm
@@ -38,10 +35,6 @@ export default function EmployeeFormModal({ employee, onClose, onSaved }) {
       if (!String(form[field]).trim()) nextErrors[field] = 'Required'
     })
     if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) nextErrors.email = 'Enter a valid email'
-    kpis.forEach((field) => {
-      const value = Number(form[field])
-      if (form[field] === '' || !Number.isFinite(value) || value < 0 || value > 100) nextErrors[field] = 'Use a value from 0 to 100'
-    })
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
@@ -50,18 +43,15 @@ export default function EmployeeFormModal({ employee, onClose, onSaved }) {
     event.preventDefault()
     if (!validate()) return
     setSaving(true)
-    const fields = {
-      ...form,
-      ...Object.fromEntries(kpis.map((field) => [field, Number(form[field])])),
-    }
-    fields.performance = calculateOverallPerformance(fields)
+    const fields = { ...form }
 
     if (employee) {
       updateEmployee(employee.id, fields)
     } else {
       const existingEmployees = getEmployees()
       const nextId = existingEmployees.length ? Math.max(...existingEmployees.map((item) => item.id)) + 1 : 1
-      addEmployee({ ...fields, employeeId: `EMP${String(nextId).padStart(3, '0')}`, projectsCompleted: 0, currentProjects: 0, jobSatisfaction: 0, experience: 0, lastReviewDate: '' })
+      const initialKpis = { productivity: 60, quality: 60, teamwork: 60, communication: 60, attendance: 100 }
+      addEmployee({ ...fields, ...initialKpis, performance: calculateOverallPerformance(initialKpis), employeeId: `EMP${String(nextId).padStart(3, '0')}`, projectsCompleted: 0, currentProjects: 0, jobSatisfaction: 0, experience: 0, lastReviewDate: '' })
     }
     onSaved(employee ? 'Employee updated successfully.' : 'Employee added successfully.')
     setSaving(false)
@@ -86,10 +76,7 @@ export default function EmployeeFormModal({ employee, onClose, onSaved }) {
               <label className="block text-sm font-medium text-slate-700">Status<select className={fieldClasses()} name="status" value={form.status} onChange={handleChange}><option value="Active">Active</option><option value="On Leave">On Leave</option></select></label>
             </div>
           </div>
-          <div>
-            <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-400">Performance KPIs</h3>
-            <div className="grid gap-4 sm:grid-cols-5">{kpis.map((field) => <label key={field} className="block text-sm font-medium capitalize text-slate-700">{field}<input className={fieldClasses(errors[field])} name={field} type="number" min="0" max="100" value={form[field]} onChange={handleChange} />{errors[field] && <span className="mt-1 block text-xs text-red-600">{errors[field]}</span>}</label>)}</div>
-          </div>
+          <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500">KPIs are set through Performance evaluation.</p>
           <div className="flex justify-end gap-3 border-t border-slate-100 pt-5"><button className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50" type="button" onClick={onClose}>Cancel</button><button className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={saving}><Save size={17} />{saving ? 'Saving...' : employee ? 'Save changes' : 'Add employee'}</button></div>
         </form>
       </div>
